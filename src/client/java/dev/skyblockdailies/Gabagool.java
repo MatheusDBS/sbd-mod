@@ -4,7 +4,7 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.network.chat.Component;
 
 /**
- * /gabagool: Very Crude Gabagool -> Hypergolic Gabagool (porte do gabagool.py).
+ * /sbd gabagool: Very Crude Gabagool -> Hypergolic Gabagool (porte do gabagool.py).
  * 1 Very Crude + 8 Sulphuric Coal -> 8 Fuel; 24 Fuel + 1 SC -> 1 Heavy; 12 Heavy + 1 SC -> 1 Hypergolic;
  * 16 Ench. Coal + 1 Ench. Sulphur -> 4 Sulphuric Coal; Hypergolic + 2 Inferno Fuel Block + 6 Distillate -> 1 Minion Fuel.
  */

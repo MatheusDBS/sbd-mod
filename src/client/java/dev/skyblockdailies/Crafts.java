@@ -31,7 +31,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
-/** /bestcraft: os crafts mais lucrativos usando um material (porte do bot do Discord). */
+/** /sbd bestcraft: os crafts mais lucrativos usando um material (porte do bot do Discord). */
 final class Crafts {
 	record Recipe(String out, double count, Map<String, Double> inputs, String type, long duration) {}
 
@@ -79,7 +79,7 @@ final class Crafts {
 	private static void loadRepo() throws IOException {
 		Path dir = repoDir();
 		if (dir == null) {
-			System.out.println("[SkyblockDailies] NEU repo not found; /bestcraft has no recipes");
+			System.out.println("[SkyblockDailies] NEU repo not found; /sbd bestcraft has no recipes");
 			return;
 		} // shortcut: depende do repo baixado pelo SkyHanni/Skyblocker; baixar o zip do NEU se um dia não tiver
 		loadRepoFrom(dir);
@@ -282,7 +282,7 @@ final class Crafts {
 		return data == null ? null : data.copyTag().getString("id").filter(s -> !s.isEmpty()).orElse(null);
 	}
 
-	/** /bestcraft sem argumento: usa o item da mão. */
+	/** /sbd bestcraft sem argumento: usa o item da mão. */
 	static int commandHeld(FabricClientCommandSource src) {
 		String id = heldItemId(src);
 		if (id == null) return -1; // nada de SkyBlock na mão: quem chamou mostra o uso

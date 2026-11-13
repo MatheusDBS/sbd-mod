@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/** Forge lines for the item tooltip (forge time, material cost, sell value, profit per forge hour) and /bestforge. */
+/** Forge lines for the item tooltip (forge time, material cost, sell value, profit per forge hour) and /sbd bestforge. */
 final class Forge {
 	private static final int MAX_MATERIALS = 8;
 

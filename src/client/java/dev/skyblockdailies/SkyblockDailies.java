@@ -57,27 +57,30 @@ public class SkyblockDailies implements ClientModInitializer {
 				KeyMapping.Category.register(Identifier.fromNamespaceAndPath("skyblockdailies", "main"))));
 
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, ctx) -> {
-			dispatcher.register(ClientCommands.literal("dailies").executes(c -> {
-				openNextTick = true; // o chat fecha depois do comando, então abre no próximo tick
-				return 1;
-			}));
-			// sem .executes() no literal, o Fabric repassa "/bestcraft" puro pro servidor (que responde Unknown command)
-			dispatcher.register(ClientCommands.literal("bestcraft")
-					.executes(c -> {
-						int r = Crafts.commandHeld(c.getSource());
-						return r >= 0 ? r : usage(c.getSource(), "/bestcraft <material>  §7or hold the item and just type /bestcraft");
-					})
-					.then(ClientCommands.argument("material", StringArgumentType.greedyString())
-							.suggests((c, b) -> {
-								Crafts.search(b.getRemaining(), 25).forEach(b::suggest);
-								return b.buildFuture();
+			// Everything lives under /sbd so it can't clash with Hypixel or other mods.
+			// Every node has .executes(): otherwise Fabric forwards an incomplete command to the server ("Unknown command").
+			dispatcher.register(ClientCommands.literal("sbd")
+					.executes(c -> help(c.getSource()))
+					.then(ClientCommands.literal("dailies").executes(c -> {
+						openNextTick = true; // o chat fecha depois do comando, então abre no próximo tick
+						return 1;
+					}))
+					.then(ClientCommands.literal("bestcraft")
+							.executes(c -> {
+								int r = Crafts.commandHeld(c.getSource());
+								return r >= 0 ? r : usage(c.getSource(), "/sbd bestcraft <material>  §7or hold the item and just type /sbd bestcraft");
 							})
-							.executes(c -> Crafts.command(c.getSource(), StringArgumentType.getString(c, "material")))));
-			dispatcher.register(ClientCommands.literal("bestforge").executes(c -> Forge.command(c.getSource())));
-			dispatcher.register(ClientCommands.literal("gabagool")
-					.executes(c -> usage(c.getSource(), "/gabagool <amount of Very Crude>  §7e.g. /gabagool 360"))
-					.then(ClientCommands.argument("very_crude", IntegerArgumentType.integer(0))
-							.executes(c -> Gabagool.command(c.getSource(), IntegerArgumentType.getInteger(c, "very_crude")))));
+							.then(ClientCommands.argument("material", StringArgumentType.greedyString())
+									.suggests((c, b) -> {
+										Crafts.search(b.getRemaining(), 25).forEach(b::suggest);
+										return b.buildFuture();
+									})
+									.executes(c -> Crafts.command(c.getSource(), StringArgumentType.getString(c, "material")))))
+					.then(ClientCommands.literal("bestforge").executes(c -> Forge.command(c.getSource())))
+					.then(ClientCommands.literal("gabagool")
+							.executes(c -> usage(c.getSource(), "/sbd gabagool <amount of Very Crude>  §7e.g. /sbd gabagool 360"))
+							.then(ClientCommands.argument("very_crude", IntegerArgumentType.integer(0))
+									.executes(c -> Gabagool.command(c.getSource(), IntegerArgumentType.getInteger(c, "very_crude"))))));
 		});
 
 		ClientTickEvents.END_CLIENT_TICK.register(mc -> {
@@ -100,6 +103,17 @@ public class SkyblockDailies implements ClientModInitializer {
 		HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("skyblockdailies", "hud"), DailiesHud::render);
 		ItemTooltipCallback.EVENT.register((stack, ctx, flag, lines) -> Tooltips.append(stack, lines));
 		Crafts.loadRepoAsync();
+	}
+
+	private static int help(FabricClientCommandSource src) {
+		for (String l : new String[]{
+				"§6§lSkyblock Dailies §7commands:",
+				"§f/sbd dailies §7- open the checklist (or press K)",
+				"§f/sbd bestcraft [material] §7- most profitable crafts (no material = item in hand)",
+				"§f/sbd bestforge §7- best Forge items by profit per hour",
+				"§f/sbd gabagool <amount> §7- Very Crude → Hypergolic calculator"})
+			src.sendFeedback(Component.literal(l));
+		return 1;
 	}
 
 	private static int usage(FabricClientCommandSource src, String text) {

@@ -6,7 +6,7 @@ A client-side Fabric mod for **Hypixel SkyBlock** (Minecraft 26.2) that keeps tr
 
 ## Features
 
-### Daily checklist — press `K` or type `/dailies`
+### Daily checklist — press `K` or type `/sbd dailies`
 - Tasks grouped by island: General, Private Island, Hub, Garden, Dwarven Mines, Crimson Isle, Dungeons, Galatea, Rift and Timers.
 - Click a task to tick it. Hover it to see where to go, what to do, the reward and when it resets (in your local time).
 - **Per-task resets**: most dailies reset at midnight New York (Hypixel server time), Bachelor's Roses at midnight UTC, the Matriarch at 8 PM New York, and cooldown tasks (Garden, Experimentation, Rift, Timers) a set time after you tick them.
@@ -27,16 +27,17 @@ Hover a SkyBlock item to see:
 - **Minion**: base output per day and coins per day (no fuel/upgrades).
 
 ### Commands
+All commands live under `/sbd` so they can't clash with Hypixel or other mods. `/sbd` alone lists them.
 | Command | What it does |
 |---|---|
-| `/dailies` | Opens the checklist (same as `K`). |
-| `/bestcraft <material>` | Top 5 most profitable crafts using a material (Tab completes). With no argument it uses the item in your hand. |
-| `/bestforge` | Top 10 Forge items by profit per forge hour. |
-| `/gabagool <amount>` | Very Crude → Hypergolic Gabagool calculator. |
+| `/sbd dailies` | Opens the checklist (same as `K`). |
+| `/sbd bestcraft [material]` | Top 5 most profitable crafts using a material (Tab completes). With no argument it uses the item in your hand. |
+| `/sbd bestforge` | Top 10 Forge items by profit per forge hour. |
+| `/sbd gabagool <amount>` | Very Crude → Hypergolic Gabagool calculator. |
 
 ## Requirements
 - Minecraft **26.2**, Fabric Loader **0.20.1+**, **Fabric API**, Java 25.
-- Recipes are read from the NotEnoughUpdates repo that **SkyHanni** or **Skyblocker** already download (`skyhanni/neurepo` or `config/skyblocker/item-repo`). Without one of them, `/bestcraft`, `/bestforge` and the price tooltips have no recipes.
+- Recipes are read from the NotEnoughUpdates repo that **SkyHanni** or **Skyblocker** already download (`skyhanni/neurepo` or `config/skyblocker/item-repo`). Without one of them, `/sbd bestcraft`, `/sbd bestforge` and the price tooltips have no recipes.
 
 ## Data sources
 - Bazaar prices: Hypixel public API `/v2/skyblock/bazaar` (no API key), cached for 5 minutes.

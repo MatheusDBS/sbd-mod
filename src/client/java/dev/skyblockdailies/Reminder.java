@@ -50,8 +50,8 @@ final class Reminder {
 		var hud = mc.gui.hud;
 		hud.setTimes(10, 100, 20); // entra 0,5s, fica 5s, sai 1s
 		hud.setTitle(Component.literal("§6§lDo your dailies!"));
-		hud.setSubtitle(Component.literal("§e" + pending + " pending §7• press §fK §7or §f/dailies"));
+		hud.setSubtitle(Component.literal("§e" + pending + " pending §7• press §fK §7or §f/sbd dailies"));
 		hud.getChat().addClientSystemMessage(Component.literal(
-				"§6[Dailies] §eYou have §f" + pending + "§e of " + daily.size() + " tasks pending. §7Press §fK§7 or type §f/dailies§7."));
+				"§6[Dailies] §eYou have §f" + pending + "§e of " + daily.size() + " tasks pending. §7Press §fK§7 or type §f/sbd dailies§7."));
 	}
 }
