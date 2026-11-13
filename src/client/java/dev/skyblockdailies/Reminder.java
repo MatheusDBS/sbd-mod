@@ -8,17 +8,12 @@ import java.util.List;
 /** Aviso na tela ~15s depois de entrar no SkyBlock, se houver dailies pendentes. */
 final class Reminder {
 	static final int DELAY_SECONDS = 15;
-	// Trocar de ilha (warp) some com o scoreboard por instantes; só conta como "saiu" depois de 1 min fora
-	static final int AWAY_SECONDS = 60;
+	// Only re-arms after 5 min outside SkyBlock. Not on connection JOIN: every Hypixel lobby/island switch
+	// re-joins through the proxy, which made the notice show on every switch.
+	static final int AWAY_SECONDS = 5 * 60;
 
 	private static boolean armed = true;
 	private static int inSeconds, outSeconds;
-
-	/** Conectou num servidor: o próximo SkyBlock dispara o aviso. */
-	static void onJoin() {
-		armed = true;
-		inSeconds = 0;
-	}
 
 	/** Called once per second, after Area.update. */
 	static void tick(Minecraft mc) {

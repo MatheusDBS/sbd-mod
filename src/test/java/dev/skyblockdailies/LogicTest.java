@@ -55,12 +55,14 @@ class LogicTest {
 
 	@Test
 	void reminder() {
-		Reminder.onJoin();
+		ticksUntilFire(false, Reminder.AWAY_SECONDS); // estado limpo: fora do SkyBlock tempo suficiente
 		assertEquals(Reminder.DELAY_SECONDS, ticksUntilFire(true, 5000)); // avisa aos 15s
 		assertEquals(-1, ticksUntilFire(true, 5000)); // só uma vez
-		ticksUntilFire(false, 5); // warp: scoreboard some por 5s
+		ticksUntilFire(false, 5); // warp/troca de servidor: scoreboard some por 5s
 		assertEquals(-1, ticksUntilFire(true, 5000)); // não repete
-		ticksUntilFire(false, Reminder.AWAY_SECONDS); // ficou 1 min fora do SkyBlock
+		ticksUntilFire(false, 90); // passou 1min30 no lobby principal e voltou
+		assertEquals(-1, ticksUntilFire(true, 5000)); // ainda não repete
+		ticksUntilFire(false, Reminder.AWAY_SECONDS); // ficou 5 min fora do SkyBlock
 		assertEquals(Reminder.DELAY_SECONDS, ticksUntilFire(true, 5000)); // voltou: avisa de novo
 	}
 
