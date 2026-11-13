@@ -4,8 +4,8 @@
 	"version": "${version}",
 	"name": "Skyblock Dailies",
 	"description": "Hypixel SkyBlock daily checklist with per-task resets, auto-tick from chat, island HUD and timers (K or /sbd dailies), plus /sbd bestcraft, /sbd bestforge and /sbd gabagool. Not affiliated with or endorsed by Hypixel.",
-	"authors": ["mathe"],
-	"license": "CC0-1.0",
+	"authors": ["MatheusDBS"],
+	"license": "MIT",
 	"icon": "assets/skyblockdailies/icon.png",
 	"environment": "client",
 	"entrypoints": {

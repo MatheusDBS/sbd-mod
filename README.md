@@ -68,5 +68,7 @@ python gen_tasks.py ../src/client/java/dev/skyblockdailies/Tasks.java
 ```
 The Portuguese task name is the stable task id, so saved progress survives text changes.
 
+The icon is drawn by `tools/make_icon.py` (needs Pillow): `python tools/make_icon.py src/main/resources/assets/skyblockdailies/icon.png`.
+
 ## License
-CC0-1.0 (see `LICENSE`).
+MIT (see `LICENSE`).
