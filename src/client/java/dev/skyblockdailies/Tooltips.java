@@ -10,10 +10,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Extra tooltip lines on SkyBlock items: forge profit, craft vs buy, NPC vs market, best recipe using it, minion output.
- * Lines are cached per item until prices change, so hovering costs a map lookup per frame.
- */
+// Cached per item until prices change, so hovering is a map lookup per frame.
 final class Tooltips {
 	private static final Pattern ACTION_TIME = Pattern.compile("Time Between Actions: ([\\d.]+)s");
 	private static final Pattern MINION = Pattern.compile("^(.+_(GENERATOR|MINION))_\\d+$");
@@ -64,7 +61,6 @@ final class Tooltips {
 		return out;
 	}
 
-	/** 30: craft it yourself vs buy it ready. */
 	static String craftLine(Crafts.Recipe r, Map<String, Double> buy, Map<String, Double> sell) {
 		if (r == null) return null;
 		Double price = buy.get(r.out());
@@ -80,7 +76,6 @@ final class Tooltips {
 		return "§6Craft: §7cost §6" + Crafts.fmt(unitCost) + " §8| §7buy §6" + Crafts.fmt(price) + " §8→ " + verdict;
 	}
 
-	/** 31: sell to NPC vs Bazaar/AH. */
 	static String marketLine(String id, Map<String, Double> sell, Map<String, Double> npc) {
 		Double n = npc.get(id), m = sell.get(id);
 		if (n == null || n <= 0) return null;
@@ -89,7 +84,6 @@ final class Tooltips {
 		return "§6Sell: §7NPC §6" + Crafts.fmt(n) + " §8| §7market §6" + Crafts.fmt(m) + " §8→ " + best;
 	}
 
-	/** 32: how many recipes use it and the most profitable one. */
 	static String usedInLine(String id, Map<String, Double> buy, Map<String, Double> sell, Map<String, String> names) {
 		List<Crafts.Recipe> rs = Crafts.usedInIndex.get(id);
 		if (rs == null || rs.isEmpty()) return null;
@@ -101,10 +95,8 @@ final class Tooltips {
 		return head + " §8| §7best: §f" + names.getOrDefault(b.r().out(), b.r().out()) + " " + c + Crafts.fmt(b.profit());
 	}
 
-	/**
-	 * 33: base minion output per day. Each resource takes 2 actions (place + break / spawn + kill);
-	 * the resource is the main ingredient of the tier I recipe. Ignores fuel, upgrades and extra drops.
-	 */
+	// Base output only: 2 actions per resource (place + break / spawn + kill),
+	// resource = main ingredient of the tier I recipe. No fuel, upgrades or extra drops.
 	static String minionLine(String id, double actionSeconds, Map<String, Double> sell, Map<String, Double> npc, Map<String, String> names) {
 		Matcher m = MINION.matcher(id);
 		if (!m.matches() || actionSeconds <= 0) return null;
@@ -116,7 +108,6 @@ final class Tooltips {
 				+ (price > 0 ? " §8≈ §6" + Crafts.fmt(perDay * price) + " coins/day" : "") + " §8(base)";
 	}
 
-	/** Most used input of a recipe, ignoring the tool (pickaxe/axe/...). */
 	static String mainIngredient(Crafts.Recipe r) {
 		if (r == null) return null;
 		return r.inputs().entrySet().stream()

@@ -18,23 +18,21 @@ class LogicTest {
 
 	@Test
 	void resets() {
-		// diária: marcada 23:30 NY -> volta 00:00 NY do dia seguinte
+		// ticked 23:30 NY -> back at the next midnight NY
 		assertEquals(ny("2026-11-14T00:00:00"), SkyblockDailies.nextReset("ET?", ny("2026-11-13T23:30:00")));
-		// marcada exatamente à meia-noite -> só volta na próxima meia-noite
+		// ticked exactly at midnight -> back the next midnight
 		assertEquals(ny("2026-11-14T00:00:00"), SkyblockDailies.nextReset("ET", ny("2026-11-13T00:00:00")));
-		// Matriarch: 20:00 NY
 		assertEquals(ny("2026-11-13T20:00:00"), SkyblockDailies.nextReset("ET20", ny("2026-11-13T10:00:00")));
 		assertEquals(ny("2026-11-14T20:00:00"), SkyblockDailies.nextReset("ET20", ny("2026-11-13T21:00:00")));
-		// UTC: 00:00 UTC = 19:00 NY (EST)
+		// midnight UTC = 19:00 NY (EST)
 		assertEquals(ny("2026-11-13T19:00:00"), SkyblockDailies.nextReset("UTC", ny("2026-11-13T10:00:00")));
-		// cooldown
 		assertEquals(ny("2026-11-13T11:15:00"), SkyblockDailies.nextReset("CD1.25", ny("2026-11-13T10:00:00")));
 	}
 
 	@Test
 	void bestCrafts() {
-		// mesmo caso do test_skyblock.py do bot
-		Crafts.usedInIndex = Map.of(); // sem índice: varre a lista inteira (outro teste pode ter preenchido)
+		// same case as the Discord bot's test_skyblock.py
+		Crafts.usedInIndex = Map.of(); // another test may have filled the index
 		Crafts.recipes = Stream.of(
 				Crafts.parseRecipe("ART", JsonParser.parseString("{\"A1\":\"SORROW:16\",\"A2\":\"PLASMA:16\",\"C3\":\"SORROW:16\",\"B2\":\"RING:1\"}").getAsJsonObject()),
 				Crafts.parseRecipe("CHEAP", JsonParser.parseString("{\"type\":\"forge\",\"inputs\":[\"SORROW:1\",\"SKYBLOCK_COIN:100\"],\"count\":2}").getAsJsonObject()),
@@ -43,7 +41,7 @@ class LogicTest {
 		Map<String, Double> buy = Map.of("SORROW", 1000.0, "PLASMA", 500.0, "RING", 10_000.0, "SKYBLOCK_COIN", 1.0);
 		Map<String, Double> sell = Map.of("ART", 100_000.0, "CHEAP", 200.0, "UNKNOWN", 1e9);
 		List<Crafts.Result> res = Crafts.bestCrafts("SORROW", 5, buy, sell);
-		assertEquals(List.of("ART", "CHEAP"), res.stream().map(r -> r.r().out()).toList()); // UNKNOWN: STICK sem preço
+		assertEquals(List.of("ART", "CHEAP"), res.stream().map(r -> r.r().out()).toList()); // STICK has no price
 		assertEquals(100_000 - (32 * 1000 + 16 * 500 + 10_000), res.get(0).profit());
 		assertEquals(2 * 200 - 1100, res.get(1).profit());
 	}
@@ -55,15 +53,15 @@ class LogicTest {
 
 	@Test
 	void reminder() {
-		ticksUntilFire(false, Reminder.AWAY_SECONDS); // estado limpo: fora do SkyBlock tempo suficiente
-		assertEquals(Reminder.DELAY_SECONDS, ticksUntilFire(true, 5000)); // avisa aos 15s
-		assertEquals(-1, ticksUntilFire(true, 5000)); // só uma vez
-		ticksUntilFire(false, 5); // warp/troca de servidor: scoreboard some por 5s
-		assertEquals(-1, ticksUntilFire(true, 5000)); // não repete
-		ticksUntilFire(false, 90); // passou 1min30 no lobby principal e voltou
-		assertEquals(-1, ticksUntilFire(true, 5000)); // ainda não repete
-		ticksUntilFire(false, Reminder.AWAY_SECONDS); // ficou 5 min fora do SkyBlock
-		assertEquals(Reminder.DELAY_SECONDS, ticksUntilFire(true, 5000)); // voltou: avisa de novo
+		ticksUntilFire(false, Reminder.AWAY_SECONDS);
+		assertEquals(Reminder.DELAY_SECONDS, ticksUntilFire(true, 5000));
+		assertEquals(-1, ticksUntilFire(true, 5000)); // only once
+		ticksUntilFire(false, 5); // server switch: no scoreboard for 5s
+		assertEquals(-1, ticksUntilFire(true, 5000));
+		ticksUntilFire(false, 90); // 1m30 in the main lobby
+		assertEquals(-1, ticksUntilFire(true, 5000));
+		ticksUntilFire(false, Reminder.AWAY_SECONDS); // 5 min away -> fires again
+		assertEquals(Reminder.DELAY_SECONDS, ticksUntilFire(true, 5000));
 	}
 
 	private static List<String> ids(String msg) {
@@ -72,10 +70,8 @@ class LogicTest {
 
 	@Test
 	void autoMark() {
-		// every rule points to a real task
 		for (AutoMark.Rule r : AutoMark.RULES)
 			assertEquals(true, Tasks.ALL.stream().anyMatch(t -> t.id().equals(r.taskId())), r.taskId());
-		// sample messages (color codes already stripped)
 		assertEquals(List.of("Fetchur"), ids("[NPC] Fetchur: thanks thats probably what i needed"));
 		assertEquals(List.of("Faction Quests (5)"), ids("You completed your Barbarian quest! Visit the Town Board to claim the rewards,"));
 		assertEquals(List.of("Mini-bosses (5)"), ids("You gained 20 Reputation for killing the miniboss!"));
@@ -123,22 +119,19 @@ class LogicTest {
 	void tooltipLines() {
 		Map<String, Double> buy = Map.of("COAL", 2.0, "ENCHANTED_COAL", 400.0, "ENCHANTED_MITHRIL", 500.0);
 		Map<String, Double> sell = Map.of("ENCHANTED_COAL", 380.0, "REFINED_MITHRIL", 110_000.0);
-		// 30: 160 coal (320) vs buying for 400 -> crafting saves 80
+		// 160 coal (320) vs buying for 400
 		Crafts.Recipe ench = recipe("ENCHANTED_COAL", "{\"A1\":\"COAL:32\",\"A2\":\"COAL:32\",\"A3\":\"COAL:32\",\"B1\":\"COAL:32\",\"B2\":\"COAL:32\"}");
 		assertEquals("§6Craft: §7cost §6320 §8| §7buy §6400 §8→ §acraft saves 80", Tooltips.craftLine(ench, buy, sell));
-		// 31: NPC pays 4.8 vs market 380
 		assertEquals("§6Sell: §7NPC §64.8 §8| §7market §6380 §8→ §amarket",
 				Tooltips.marketLine("ENCHANTED_COAL", sell, Map.of("ENCHANTED_COAL", 4.8)));
 		assertEquals(null, Tooltips.marketLine("ENCHANTED_COAL", sell, Map.of()));
-		// 33: tier I recipe main ingredient, ignoring the tool
 		Crafts.Recipe minion = recipe("COAL_GENERATOR_1", "{\"A1\":\"COAL:10\",\"A2\":\"COAL:10\",\"B2\":\"WOOD_PICKAXE:1\"}");
 		assertEquals("COAL", Tooltips.mainIngredient(minion));
 		Crafts.craftByOut = Map.of("COAL_GENERATOR_1", minion);
-		// 15s per action -> 2 actions per coal -> 2880/day; best price = max(market, npc)
+		// 15s/action, 2 actions per coal -> 2880/day
 		assertEquals("§6Minion: §7~2.88k Coal/day §8≈ §65.76k coins/day §8(base)",
 				Tooltips.minionLine("COAL_GENERATOR_5", 15, Map.of(), Map.of("COAL", 2.0), Map.of("COAL", "Coal")));
 		assertEquals(null, Tooltips.minionLine("COAL", 15, Map.of(), Map.of(), Map.of()));
-		// 32: used-in uses the index
 		Crafts.usedInIndex = Map.of("COAL", List.of(ench));
 		assertEquals("§6Used in §f1 §6recipe §8| §7best: §fEnchanted Coal §a+60",
 				Tooltips.usedInLine("COAL", buy, sell, Map.of("ENCHANTED_COAL", "Enchanted Coal")));

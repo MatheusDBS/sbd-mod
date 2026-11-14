@@ -3,12 +3,8 @@ package dev.skyblockdailies;
 import java.util.List;
 import java.util.regex.Pattern;
 
-/**
- * Ticks tasks automatically when the matching chat message shows up (color codes stripped).
- * Patterns come from SkyHanni / Skyblocker sources and SkyHanni-REPO; Hypixel may change the text at any time.
- */
+ // Matched against chat with color codes stripped. Hypixel can change these messages at any time.
 final class AutoMark {
-	/** {@code need} = how many messages until the task is ticked (e.g. 5 quests). */
 	record Rule(String taskId, Pattern pattern, int need) {}
 
 	private static Rule rule(String taskId, String regex, int need) {
@@ -34,7 +30,6 @@ final class AutoMark {
 		return RULES.stream().filter(r -> r.taskId().equals(t.id())).mapToInt(Rule::need).findFirst().orElse(1);
 	}
 
-	/** Rules this (color-stripped) message matches. */
 	static List<Rule> matches(String plain) {
 		return RULES.stream().filter(r -> r.pattern().matcher(plain).find()).toList();
 	}

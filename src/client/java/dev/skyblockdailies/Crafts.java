@@ -31,32 +31,30 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
-/** /sbd bestcraft: os crafts mais lucrativos usando um material (porte do bot do Discord). */
 final class Crafts {
 	record Recipe(String out, double count, Map<String, Double> inputs, String type, long duration) {}
 
 	record Result(Recipe r, double cost, double value, double profit) {}
 
-	private static final String BAZAAR = "https://api.hypixel.net/v2/skyblock/bazaar"; // endpoint público, sem API key
+	private static final String BAZAAR = "https://api.hypixel.net/v2/skyblock/bazaar"; // public endpoints, no API key needed
 	private static final String LOWEST_BIN = "https://sky.coflnet.com/api/prices/neu";
-	private static final long PRICE_TTL_MS = 5 * 60_000; // cache: no máximo 1 busca a cada 5 min
+	private static final long PRICE_TTL_MS = 5 * 60_000;
 	private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
 	private static final String[] GRID = {"A1", "A2", "A3", "B1", "B2", "B3", "C1", "C2", "C3"};
 
 	static volatile List<Recipe> recipes = List.of();
-	static volatile Map<String, String> names = Map.of(); // id -> nome
-	private static volatile Map<String, String> usedByName = Map.of(); // nome minúsculo -> id (só materiais usados em receitas)
+	static volatile Map<String, String> names = Map.of();
+	private static volatile Map<String, String> usedByName = Map.of(); // lowercase name -> id, only items used in recipes
 	static volatile Map<String, Double> buy = Map.of(), sell = Map.of();
-	static volatile Map<String, Recipe> forgeByOut = Map.of(); // item forjado -> receita da Forge
-	static volatile Map<String, Recipe> craftByOut = Map.of(); // item -> receita de crafting
-	static volatile Map<String, List<Recipe>> usedInIndex = Map.of(); // material -> receitas que o usam
-	static volatile Map<String, Double> npcSell = Map.of(); // item -> preço de venda pro NPC (API de itens do Hypixel)
-	static volatile long pricesVersion; // muda a cada atualização de preços (invalida o cache dos tooltips)
-	private static final String ITEMS = "https://api.hypixel.net/v2/resources/skyblock/items"; // público, sem API key
+	static volatile Map<String, Recipe> forgeByOut = Map.of();
+	static volatile Map<String, Recipe> craftByOut = Map.of();
+	static volatile Map<String, List<Recipe>> usedInIndex = Map.of();
+	static volatile Map<String, Double> npcSell = Map.of();
+	static volatile long pricesVersion; // bumped on every price update; tooltips use it as cache key
+	private static final String ITEMS = "https://api.hypixel.net/v2/resources/skyblock/items";
 	private static long pricesAt;
 	private static volatile boolean refreshing;
 
-	// --- receitas: lidas do repositório NEU que o SkyHanni/Skyblocker já mantém atualizado no PC ---
 
 	static void loadRepoAsync() {
 		CompletableFuture.runAsync(() -> {
@@ -81,7 +79,7 @@ final class Crafts {
 		if (dir == null) {
 			System.out.println("[SkyblockDailies] NEU repo not found; /sbd bestcraft has no recipes");
 			return;
-		} // shortcut: depende do repo baixado pelo SkyHanni/Skyblocker; baixar o zip do NEU se um dia não tiver
+		} // shortcut: relies on the repo SkyHanni/Skyblocker download; fetch the NEU zip if that stops being true
 		loadRepoFrom(dir);
 	}
 
@@ -102,7 +100,6 @@ final class Crafts {
 						if (p != null && !p.inputs().isEmpty()) rs.add(p);
 					}
 				} catch (Exception ignored) {
-					// item com formato inesperado: pula
 				}
 			}
 		}
@@ -131,7 +128,7 @@ final class Crafts {
 			} catch (NumberFormatException ignored) {
 			}
 		}
-		return Map.entry(s, 1.0); // algumas receitas omitem ":1"
+		return Map.entry(s, 1.0); // some recipes omit ":1"
 	}
 
 	static Recipe parseRecipe(String out, JsonObject r) {
@@ -142,7 +139,7 @@ final class Crafts {
 		} else if (type.equals("crafting")) {
 			for (String k : GRID) if (r.has(k) && !r.get(k).getAsString().isEmpty()) parts.add(r.get(k).getAsString());
 		} else {
-			return null; // npc_shop, drops, trades... não são crafts
+			return null; // npc_shop, drops, trades... aren't crafts
 		}
 		Map<String, Double> inputs = new LinkedHashMap<>();
 		for (String p : parts) {
@@ -154,9 +151,8 @@ final class Crafts {
 				count > 0 ? count : 1, inputs, type, r.has("duration") ? r.get("duration").getAsLong() : 0);
 	}
 
-	// --- preços ---
 
-	/** Atualiza os preços em segundo plano se o cache venceu (para o tooltip, que não pode travar a tela). */
+	// Non-blocking refresh for tooltips, which must never stall rendering.
 	static void refreshPricesAsync() {
 		if (refreshing || System.currentTimeMillis() - pricesAt < PRICE_TTL_MS) return;
 		refreshing = true;
@@ -186,13 +182,13 @@ final class Crafts {
 		bz.entrySet().forEach(e -> {
 			JsonObject q = e.getValue().getAsJsonObject().getAsJsonObject("quick_status");
 			double sp = q.get("sellPrice").getAsDouble(), bp = q.get("buyPrice").getAsDouble();
-			if (sp > 0 && bp > 0) { // buy order custa ~sellPrice, sell offer rende ~buyPrice
+			if (sp > 0 && bp > 0) { // a buy order costs ~sellPrice, a sell offer earns ~buyPrice
 				b.put(e.getKey(), sp);
 				s.put(e.getKey(), bp);
 			}
 		});
 		b.put("SKYBLOCK_COIN", 1.0);
-		if (npcSell.isEmpty()) { // preços de NPC quase nunca mudam: 1 download por sessão
+		if (npcSell.isEmpty()) { // NPC prices barely change: once per session
 			Map<String, Double> npc = new HashMap<>();
 			for (JsonElement e : get(ITEMS).getAsJsonArray("items")) {
 				JsonObject o = e.getAsJsonObject();
@@ -214,7 +210,6 @@ final class Crafts {
 		return JsonParser.parseString(res.body()).getAsJsonObject();
 	}
 
-	// --- ranking ---
 
 	static List<Result> bestCrafts(String material, int top, Map<String, Double> buy, Map<String, Double> sell) {
 		return bestCrafts(usedInIndex.isEmpty() ? recipes : usedInIndex.getOrDefault(material, List.of()), material, top, buy, sell);
@@ -226,7 +221,7 @@ final class Crafts {
 		for (Recipe r : candidates) {
 			if (!r.inputs().containsKey(material) || !sell.containsKey(r.out())) continue;
 			if (!seen.add(r.out() + r.inputs())) continue;
-			if (!buy.keySet().containsAll(r.inputs().keySet())) continue; // insumo sem preço (vanilla/NPC): pula
+			if (!buy.keySet().containsAll(r.inputs().keySet())) continue; // unpriced input (vanilla/NPC item)
 			double cost = r.inputs().entrySet().stream().mapToDouble(e -> buy.get(e.getKey()) * e.getValue()).sum();
 			double value = sell.get(r.out()) * r.count();
 			out.add(new Result(r, cost, value, value - cost));
@@ -270,22 +265,20 @@ final class Crafts {
 		return run(src, id);
 	}
 
-	/** ID SkyBlock do item na mão, ou null. */
 	static String heldItemId(FabricClientCommandSource src) {
 		var player = src.getClient().player;
 		return player == null ? null : skyblockId(player.getMainHandItem());
 	}
 
-	/** ID SkyBlock de um item (fica em custom_data.id nos itens do Hypixel), ou null. */
+	// Hypixel stores the SkyBlock id in custom_data.id
 	static String skyblockId(ItemStack stack) {
 		CustomData data = stack.get(DataComponents.CUSTOM_DATA);
 		return data == null ? null : data.copyTag().getString("id").filter(s -> !s.isEmpty()).orElse(null);
 	}
 
-	/** /sbd bestcraft sem argumento: usa o item da mão. */
 	static int commandHeld(FabricClientCommandSource src) {
 		String id = heldItemId(src);
-		if (id == null) return -1; // nada de SkyBlock na mão: quem chamou mostra o uso
+		if (id == null) return -1; // nothing from SkyBlock in hand: caller prints usage
 		if (recipes.isEmpty()) {
 			src.sendError(Component.literal("Recipes still loading (or launch once with SkyHanni/Skyblocker so it downloads the NEU repo)."));
 			return 0;

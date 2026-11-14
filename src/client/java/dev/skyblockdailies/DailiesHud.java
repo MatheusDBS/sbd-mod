@@ -7,14 +7,12 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Small list with the pending dailies of the current island. Position, size and color are configurable. */
 final class DailiesHud {
 	private static final int MAX_LINES = 6, PAD = 2;
-	// background color presets (ARGB) and their names
 	static final int[] COLORS = {0x80000000, 0xC0000000, 0x80102040, 0x80301040, 0x00000000};
 	static final String[] COLOR_NAMES = {"Dark", "Darker", "Blue", "Purple", "None"};
 
-	// config (saved in prefs): top-left corner as a fraction of the screen, scale and color preset
+	// x/y: top-left corner as a fraction of the screen, so it survives resizing
 	static float x = 0.005f, y = 0.4f, scale = 1f;
 	static int color;
 
@@ -29,12 +27,10 @@ final class DailiesHud {
 		if (current != null && mc.gui.screen() == null) draw(g, current);
 	}
 
-	/** Called once per second. */
 	static void update() {
 		current = SkyblockDailies.hudOn && Area.inSkyblock && Area.section != null ? lines(Area.section) : null;
 	}
 
-	/** HUD text for a section, or null if nothing is pending there. */
 	static List<String> lines(String section) {
 		List<Tasks.Task> pending = SkyblockDailies.visible().stream()
 				.filter(t -> t.section().equals(section) && !SkyblockDailies.isDone(t))
@@ -59,7 +55,6 @@ final class DailiesHud {
 		int sw = mc.getWindow().getGuiScaledWidth(), sh = mc.getWindow().getGuiScaledHeight();
 		boxW = Math.round((w + PAD * 2) * scale);
 		boxH = Math.round((lines.size() * lh + PAD * 2) * scale);
-		// keep the whole box on screen
 		boxX = Math.max(0, Math.min(sw - boxW, Math.round(x * sw)));
 		boxY = Math.max(0, Math.min(sh - boxH, Math.round(y * sh)));
 

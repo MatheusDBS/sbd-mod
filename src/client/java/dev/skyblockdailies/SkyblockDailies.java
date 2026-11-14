@@ -37,13 +37,13 @@ import java.util.Map;
 import java.util.Set;
 
 public class SkyblockDailies implements ClientModInitializer {
-	// Horário do servidor do Hypixel
+	// Hypixel server time
 	static final ZoneId NY = ZoneId.of("America/New_York");
 
-	private static final Map<String, Long> done = new HashMap<>(); // id -> quando foi marcada (epoch ms)
+	private static final Map<String, Long> done = new HashMap<>(); // id -> when it was ticked (epoch ms)
 	private static final Set<String> hidden = new HashSet<>();
-	static final List<Tasks.Task> custom = new ArrayList<>(); // tarefas criadas pelo jogador
-	private static final Map<String, long[]> progress = new HashMap<>(); // id -> {dia NY (epochDay), contagem}
+	static final List<Tasks.Task> custom = new ArrayList<>();
+	private static final Map<String, long[]> progress = new HashMap<>(); // id -> {NY epochDay, count}
 	static boolean hudOn = true;
 	private static boolean openNextTick;
 	private static int tickCount;
@@ -61,7 +61,7 @@ public class SkyblockDailies implements ClientModInitializer {
 			dispatcher.register(ClientCommands.literal("sbd")
 					.executes(c -> help(c.getSource()))
 					.then(ClientCommands.literal("dailies").executes(c -> {
-						openNextTick = true; // o chat fecha depois do comando, então abre no próximo tick
+						openNextTick = true; // the chat screen closes after the command, so open next tick
 						return 1;
 					}))
 					.then(ClientCommands.literal("bestcraft")
@@ -123,9 +123,7 @@ public class SkyblockDailies implements ClientModInitializer {
 		if (mc.player != null) mc.gui.hud.getChat().addClientSystemMessage(Component.literal(text));
 	}
 
-	// --- reset ---
 
-	/** Próximo momento em que a tarefa marcada em {@code marked} volta a ficar pendente. */
 	static Instant nextReset(String rule, Instant marked) {
 		String r = rule.replace("?", "");
 		if (r.startsWith("CD")) return marked.plusSeconds(Math.round(Double.parseDouble(r.substring(2)) * 3600));
@@ -136,7 +134,6 @@ public class SkyblockDailies implements ClientModInitializer {
 		return (next.isAfter(m) ? next : next.plusDays(1)).toInstant();
 	}
 
-	/** Texto do tooltip: quando a tarefa reseta, no horário do seu PC. */
 	static String describeReset(String rule) {
 		String r = rule.replace("?", "");
 		if (r.startsWith("CD")) {
@@ -160,9 +157,8 @@ public class SkyblockDailies implements ClientModInitializer {
 		return Duration.between(Instant.now(), nextReset("ET", Instant.now()));
 	}
 
-	// --- estado das tarefas ---
 
-	/** Tarefa diária (conta no progresso e no aviso); os Timers não. */
+	// Timers don't count toward daily progress or the join reminder
 	static boolean isDaily(Tasks.Task t) {
 		return !t.section().equals("Timers");
 	}
@@ -176,7 +172,6 @@ public class SkyblockDailies implements ClientModInitializer {
 		save();
 	}
 
-	/** Built-in tasks + the player's custom tasks. */
 	static List<Tasks.Task> allTasks() {
 		if (custom.isEmpty()) return Tasks.ALL;
 		List<Tasks.Task> all = new ArrayList<>(Tasks.ALL);
@@ -201,12 +196,11 @@ public class SkyblockDailies implements ClientModInitializer {
 		save();
 	}
 
-	/** Tarefas visíveis (não ocultas). */
 	static List<Tasks.Task> visible() {
 		return allTasks().stream().filter(t -> !isHidden(t)).toList();
 	}
 
-	/** Tempo até a tarefa voltar, ou null se não está feita. */
+	// null when the task isn't done
 	static Duration remaining(Tasks.Task t) {
 		Long m = done.get(t.id());
 		if (m == null) return null;
@@ -239,13 +233,12 @@ public class SkyblockDailies implements ClientModInitializer {
 		save();
 	}
 
-	/** Contagem de hoje (dia NY) para tarefas com várias partes, ex. 5 quests. */
+	// today's count (NY day) for multi-part tasks like 5 quests
 	static int progressOf(Tasks.Task t) {
 		long[] p = progress.get(t.id());
 		return p != null && p[0] == LocalDate.now(NY).toEpochDay() ? (int) p[1] : 0;
 	}
 
-	/** Soma 1 na contagem; marca a tarefa quando chega em {@code need}. */
 	static void addProgress(Tasks.Task t, int need) {
 		if (isDone(t)) return;
 		int n = progressOf(t) + 1;
@@ -257,7 +250,6 @@ public class SkyblockDailies implements ClientModInitializer {
 		save();
 	}
 
-	/** Timers/cooldowns que acabaram: avisa e libera de novo. */
 	private static void notifyReady(Minecraft mc) {
 		if (mc.player == null) return;
 		List<String> ready = new ArrayList<>();
@@ -273,15 +265,14 @@ public class SkyblockDailies implements ClientModInitializer {
 		say(mc, "§6[Dailies] §aReady again: §f" + names);
 	}
 
-	// --- persistência ---
 
 	private static Path file(String name) {
 		return FabricLoader.getInstance().getConfigDir().resolve(name);
 	}
 
-	// skyblockdailies.txt: "id<TAB>epochMillis" por tarefa marcada.
-	// skyblockdailies-prefs.txt: "hide<TAB>id", "hud<TAB>off", "p<TAB>id<TAB>dia<TAB>contagem".
-	// Linhas inválidas são ignoradas.
+	// skyblockdailies.txt: "id<TAB>epochMillis" per ticked task.
+	// skyblockdailies-prefs.txt: "hide<TAB>id", "hud<TAB>off", "p<TAB>id<TAB>day<TAB>count", "hudcfg...", "custom...".
+	// Unknown or broken lines are skipped.
 	private static void load() {
 		try {
 			if (Files.exists(file("skyblockdailies.txt"))) {

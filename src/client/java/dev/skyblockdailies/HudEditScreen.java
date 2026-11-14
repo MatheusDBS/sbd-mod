@@ -8,7 +8,6 @@ import net.minecraft.network.chat.Component;
 
 import java.util.List;
 
-/** Drag the HUD to move it, scroll to resize, buttons for color and on/off. */
 public class HudEditScreen extends Screen {
 	private static final List<String> SAMPLE = List.of(
 			"§6Dailies §7» §fGarden §7(3)", "§7• §fServe all Visitors", "§7• §fJacob's Contest", "§7• §fSpend Copper");

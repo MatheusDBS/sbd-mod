@@ -8,11 +8,10 @@ import net.minecraft.world.scores.Objective;
 
 import java.util.Locale;
 
-/** Onde o jogador está: SkyBlock (título do scoreboard) e ilha (linha "Area:" / "Dungeon:" do tab). */
 final class Area {
 	static boolean inSkyblock;
-	static String area = ""; // nome cru do Hypixel, ex. "Crimson Isle"
-	static String section;   // seção do menu correspondente, ou null
+	static String area = "";
+	static String section;
 
 	static void update(Minecraft mc) {
 		inSkyblock = inSkyblock(mc);
@@ -20,7 +19,7 @@ final class Area {
 		section = sectionOf(area);
 	}
 
-	/** O Hypixel mostra "SKYBLOCK" no título do scoreboard lateral (também "SKYBLOCK CO-OP" e "SKYBLOCK GUEST"). */
+	// Hypixel puts "SKYBLOCK" in the sidebar title (also "SKYBLOCK CO-OP" / "SKYBLOCK GUEST").
 	static boolean inSkyblock(Minecraft mc) {
 		if (mc.level == null) return false;
 		Objective obj = mc.level.getScoreboard().getDisplayObjective(DisplaySlot.SIDEBAR);
@@ -38,7 +37,6 @@ final class Area {
 		return "";
 	}
 
-	/** Mapeia o nome da área do Hypixel para a seção do menu. */
 	static String sectionOf(String area) {
 		String a = area.toLowerCase(Locale.ROOT);
 		if (a.isEmpty()) return null;

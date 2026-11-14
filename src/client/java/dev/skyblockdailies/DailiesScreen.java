@@ -11,10 +11,10 @@ import java.util.List;
 
 public class DailiesScreen extends Screen {
 	private static final int TOP = 34, ROW = 22, BOTTOM = 32, SIDE_W = 120, GAP = 8;
-	// lembra seção e página entre aberturas
+	// static: remembered between openings
 	private static String section = Tasks.SECTIONS.get(0);
 	private static int page;
-	private static boolean edit; // modo editar: clicar esconde/mostra a tarefa
+	private static boolean edit;
 
 	public DailiesScreen() {
 		super(Component.literal("Skyblock Dailies"));
@@ -33,7 +33,6 @@ public class DailiesScreen extends Screen {
 		int panelW = Math.min(width - 20, 560);
 		int left = (width - panelW) / 2;
 
-		// Barra lateral: uma aba por lugar, com progresso
 		List<String> secs = Tasks.SECTIONS;
 		int tabH = Math.min(ROW, (height - TOP - BOTTOM) / secs.size());
 		for (int i = 0; i < secs.size(); i++) {
@@ -50,7 +49,6 @@ public class DailiesScreen extends Screen {
 					.bounds(left, TOP + i * tabH, SIDE_W, tabH - 2).build());
 		}
 
-		// Painel: tarefas da seção escolhida
 		List<Tasks.Task> tasks = tasksOf(section);
 		int x0 = left + SIDE_W + GAP, areaW = panelW - SIDE_W - GAP;
 		int cols = areaW >= 400 ? 2 : 1;
@@ -80,7 +78,7 @@ public class DailiesScreen extends Screen {
 					.bounds(x, y, edit && SkyblockDailies.isCustom(t) ? colW - 22 : colW, 20)
 					.tooltip(Tooltip.create(Component.literal(t.tip() + "\n§eResets: §f" + SkyblockDailies.describeReset(t.reset()))))
 					.build());
-			if (edit && SkyblockDailies.isCustom(t)) { // delete button for custom tasks
+			if (edit && SkyblockDailies.isCustom(t)) {
 				addRenderableWidget(Button.builder(Component.literal("§c✕"), b -> {
 							SkyblockDailies.removeCustom(t);
 							rebuildWidgets();

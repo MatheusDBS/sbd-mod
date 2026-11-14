@@ -1,18 +1,22 @@
 package dev.skyblockdailies;
 
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.minecraft.network.chat.Component;
+
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
-/** Forge lines for the item tooltip (forge time, material cost, sell value, profit per forge hour) and /sbd bestforge. */
 final class Forge {
 	private static final int MAX_MATERIALS = 8;
 
 	record Ranked(Crafts.Recipe r, double cost, double value, double profit, double perHour) {}
 
-	/** Forge recipes with all prices known, sorted by profit per forge hour. */
-	static List<Ranked> best(java.util.Collection<Crafts.Recipe> forges, int top, Map<String, Double> buy, Map<String, Double> sell) {
+	static List<Ranked> best(Collection<Crafts.Recipe> forges, int top, Map<String, Double> buy, Map<String, Double> sell) {
 		List<Ranked> out = new ArrayList<>();
 		for (Crafts.Recipe r : forges) {
 			Double unit = sell.get(r.out());
@@ -21,17 +25,17 @@ final class Forge {
 			double value = unit * r.count(), profit = value - cost;
 			out.add(new Ranked(r, cost, value, profit, profit / (Math.max(60, r.duration()) / 3600.0)));
 		}
-		out.sort(java.util.Comparator.comparingDouble(Ranked::perHour).reversed());
+		out.sort(Comparator.comparingDouble(Ranked::perHour).reversed());
 		return out.subList(0, Math.min(top, out.size()));
 	}
 
-	static int command(net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource src) {
+	static int command(FabricClientCommandSource src) {
 		if (Crafts.forgeByOut.isEmpty()) {
-			src.sendError(net.minecraft.network.chat.Component.literal("Recipes still loading (or launch once with SkyHanni/Skyblocker so it downloads the NEU repo)."));
+			src.sendError(Component.literal("Recipes still loading (or launch once with SkyHanni/Skyblocker so it downloads the NEU repo)."));
 			return 0;
 		}
-		src.sendFeedback(net.minecraft.network.chat.Component.literal("§7Fetching prices..."));
-		java.util.concurrent.CompletableFuture.runAsync(() -> {
+		src.sendFeedback(Component.literal("§7Fetching prices..."));
+		CompletableFuture.runAsync(() -> {
 			List<String> lines = new ArrayList<>();
 			try {
 				Crafts.ensurePricesNow();
@@ -47,12 +51,12 @@ final class Forge {
 			} catch (Exception e) {
 				lines.add("§cFailed to fetch prices: " + e.getMessage());
 			}
-			src.getClient().execute(() -> lines.forEach(l -> src.sendFeedback(net.minecraft.network.chat.Component.literal(l))));
+			src.getClient().execute(() -> lines.forEach(l -> src.sendFeedback(Component.literal(l))));
 		});
 		return 1;
 	}
 
-	/** Tooltip lines; "?" where a price is unknown (prices still loading or item not sold anywhere). */
+	// "?" where a price is unknown (still loading, or not sold anywhere)
 	static List<String> lines(Crafts.Recipe r, Map<String, Double> buy, Map<String, Double> sell, Map<String, String> names) {
 		List<String> out = new ArrayList<>();
 		out.add("");

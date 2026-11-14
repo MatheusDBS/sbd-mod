@@ -5,7 +5,6 @@ import net.minecraft.network.chat.Component;
 
 import java.util.List;
 
-/** Aviso na tela ~15s depois de entrar no SkyBlock, se houver dailies pendentes. */
 final class Reminder {
 	static final int DELAY_SECONDS = 15;
 	// Only re-arms after 5 min outside SkyBlock. Not on connection JOIN: every Hypixel lobby/island switch
@@ -20,7 +19,6 @@ final class Reminder {
 		if (step(Area.inSkyblock)) show(mc);
 	}
 
-	/** Advances one second; true when the notice should show now. */
 	static boolean step(boolean in) {
 		if (!in) {
 			if (++outSeconds >= AWAY_SECONDS) {
@@ -37,13 +35,12 @@ final class Reminder {
 		return false;
 	}
 
-
 	private static void show(Minecraft mc) {
 		List<Tasks.Task> daily = SkyblockDailies.visible().stream().filter(SkyblockDailies::isDaily).toList();
 		long pending = daily.stream().filter(t -> !SkyblockDailies.isDone(t)).count();
 		if (pending == 0) return;
 		var hud = mc.gui.hud;
-		hud.setTimes(10, 100, 20); // entra 0,5s, fica 5s, sai 1s
+		hud.setTimes(10, 100, 20); // ticks: fade in 0.5s, stay 5s, fade out 1s
 		hud.setTitle(Component.literal("§6§lDo your dailies!"));
 		hud.setSubtitle(Component.literal("§e" + pending + " pending §7• press §fK §7or §f/sbd dailies"));
 		hud.getChat().addClientSystemMessage(Component.literal(

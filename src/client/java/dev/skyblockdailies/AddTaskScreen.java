@@ -6,9 +6,7 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
-/** Create a custom task: name, section and when it resets. */
 public class AddTaskScreen extends Screen {
-	// reset presets: label -> rule (same rules as the built-in tasks)
 	private static final String[][] RESETS = {
 			{"Daily (midnight New York)", "ET"}, {"Every 1h", "CD1"}, {"Every 2h", "CD2"}, {"Every 4h", "CD4"},
 			{"Every 8h", "CD8"}, {"Every 12h", "CD12"}, {"Every 24h", "CD24"}, {"Every 2 days", "CD48"}, {"Weekly", "CD168"}};
