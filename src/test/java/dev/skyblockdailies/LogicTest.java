@@ -151,6 +151,52 @@ class LogicTest {
 	}
 
 	@Test
+	void goalParsing() {
+		Map<String, Double> m = new java.util.HashMap<>();
+		Goal.putNumber(m, "Purse: 1,234,567 (+5)");
+		Goal.putNumber(m, " Mithril: 12.5k");
+		Goal.putNumber(m, "Bits: 3,000");
+		Goal.putNumber(m, "www.hypixel.net");
+		assertEquals(Map.of("purse", 1_234_567.0, "mithril", 12_500.0, "bits", 3000.0), m);
+		assertEquals(10_000_000.0, Goal.parseAmount("10M"));
+		assertEquals(2500.0, Goal.parseAmount("2.5k"));
+		assertEquals(1000.0, Goal.parseAmount("1,000"));
+		assertEquals(-1.0, Goal.parseAmount("abc"));
+	}
+
+	@Test
+	void upgradeCosts() {
+		// real NEU entry for Hyperion
+		var hyp = JsonParser.parseString("{\"type\":\"Wither\",\"1\":150,\"2\":300,\"3\":500,\"4\":900,\"5\":1500,"
+				+ "\"items\":{\"4\":[\"SKYBLOCK_COIN:10000\"],\"5\":[\"SKYBLOCK_COIN:25000\"]}}").getAsJsonObject();
+		Map<String, Double> buy = Map.of("ESSENCE_WITHER", 3000.0, "SKYBLOCK_COIN", 1.0, "ENCHANTMENT_SHARPNESS_7", 5e6);
+		assertEquals(900 * 3000.0 + 10_000, Upgrade.starCost(hyp, 4, buy));
+		assertEquals(5, Upgrade.maxStars(hyp));
+		var essences = new com.google.gson.JsonObject();
+		essences.add("HYPERION", hyp);
+		List<String> lines = Upgrade.lines("HYPERION", 3, Map.of("sharpness", 6, "smite", 7), buy, Map.of("HYPERION", "Hyperion"), essences);
+		assertEquals(true, lines.contains("§7Next star (4): §62.71M §8(900 Wither Essence)"), lines.toString());
+		assertEquals(true, lines.contains("§7To max (5): §67.24M"), lines.toString()); // 2.71M + 1500*3000+25k
+		assertEquals(true, lines.contains("§8 - §7Sharpness 6 → 7: §65.00M"), lines.toString());
+		assertEquals(false, lines.toString().contains("Smite"), lines.toString()); // no smite 8 book
+	}
+
+	@Test
+	void sellCheck() {
+		// Coflnet bazaar items come newest-first; must be sorted
+		String json = "[{\"avg\":30,\"min\":3,\"time\":\"2026-11-03\"},{\"avg\":10,\"min\":1,\"time\":\"2026-11-01\"},{\"avg\":20,\"min\":2,\"time\":\"2026-11-02\"}]";
+		assertEquals(List.of(10.0, 20.0, 30.0), SellCheck.daily(json, "avg"));
+		assertEquals(List.of(1.0, 2.0, 3.0), SellCheck.daily(json, "min"));
+		// a 10-coin "lowest sale" among ~500M days is dropped
+		String outlier = "[{\"min\":500e6,\"time\":\"1\"},{\"min\":10,\"time\":\"2\"},{\"min\":480e6,\"time\":\"3\"},{\"min\":510e6,\"time\":\"4\"}]";
+		assertEquals(List.of(500e6, 480e6, 510e6), SellCheck.daily(outlier, "min"));
+		List<Double> month = java.util.stream.IntStream.rangeClosed(1, 30).mapToObj(i -> (double) i).toList();
+		assertEquals(true, SellCheck.lines("X", month, 29, true).stream().anyMatch(l -> l.contains("good time to sell")));
+		assertEquals(true, SellCheck.lines("X", month, 3, false).stream().anyMatch(l -> l.contains("better to hold")));
+		assertEquals(true, SellCheck.lines("X", List.of(1.0, 2.0), 3, true).stream().anyMatch(l -> l.contains("Not enough")));
+	}
+
+	@Test
 	void gabagool() {
 		assertEquals(new Gabagool.Result(1, 0, 301, 1216, 76, 2, 6), Gabagool.calc(36));
 		assertEquals(new Gabagool.Result(2, 3, 602, 2416, 151, 4, 12), Gabagool.calc(75));

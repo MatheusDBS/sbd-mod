@@ -79,13 +79,28 @@ public class SkyblockDailies implements ClientModInitializer {
 					.then(ClientCommands.literal("gabagool")
 							.executes(c -> usage(c.getSource(), "/sbd gabagool <amount of Very Crude>  §7e.g. /sbd gabagool 360"))
 							.then(ClientCommands.argument("very_crude", IntegerArgumentType.integer(0))
-									.executes(c -> Gabagool.command(c.getSource(), IntegerArgumentType.getInteger(c, "very_crude"))))));
+									.executes(c -> Gabagool.command(c.getSource(), IntegerArgumentType.getInteger(c, "very_crude")))))
+					.then(ClientCommands.literal("goal")
+							.executes(c -> Goal.status(c.getSource()))
+							.then(ClientCommands.literal("clear").executes(c -> Goal.clear(c.getSource())))
+							.then(ClientCommands.argument("amount", StringArgumentType.word())
+									.executes(c -> Goal.status(c.getSource()))
+									.then(ClientCommands.argument("name", StringArgumentType.greedyString())
+											.suggests((c, b) -> {
+												Area.numbers.keySet().forEach(b::suggest);
+												return b.buildFuture();
+											})
+											.executes(c -> Goal.set(c.getSource(), StringArgumentType.getString(c, "amount"), StringArgumentType.getString(c, "name"))))))
+					.then(ClientCommands.literal("upgrade").executes(c -> Upgrade.command(c.getSource())))
+					.then(ClientCommands.literal("sellcheck").executes(c -> SellCheck.command(c.getSource())))
+					.then(ClientCommands.literal("help").executes(c -> help(c.getSource()))));
 		});
 
 		ClientTickEvents.END_CLIENT_TICK.register(mc -> {
 			if (++tickCount % 20 == 0) { // once per second: everything that reads the scoreboard/tab list
 				Area.update(mc);
 				Reminder.tick(mc);
+				Goal.tick(mc);
 				DailiesHud.update();
 				notifyReady(mc);
 			}
@@ -106,10 +121,14 @@ public class SkyblockDailies implements ClientModInitializer {
 	private static int help(FabricClientCommandSource src) {
 		for (String l : new String[]{
 				"§6§lSkyblock Dailies §7commands:",
+				"§f/sbd help §7- this list",
 				"§f/sbd dailies §7- open the checklist (or press K)",
 				"§f/sbd bestcraft [material] §7- most profitable crafts (no material = item in hand)",
 				"§f/sbd bestforge §7- best Forge items by profit per hour",
-				"§f/sbd gabagool <amount> §7- Very Crude → Hypergolic calculator"})
+				"§f/sbd gabagool <amount> §7- Very Crude → Hypergolic calculator",
+				"§f/sbd goal <amount> <name> §7- session goal, e.g. 10M purse (shown on the HUD)",
+				"§f/sbd upgrade §7- cost of the next stars and enchant levels of the held item",
+				"§f/sbd sellcheck §7- is the held item's price high or low vs the last 30 days"})
 			src.sendFeedback(Component.literal(l));
 		return 1;
 	}

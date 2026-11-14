@@ -5,18 +5,45 @@ import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.scores.DisplaySlot;
 import net.minecraft.world.scores.Objective;
+import net.minecraft.world.scores.PlayerScoreEntry;
+import net.minecraft.world.scores.PlayerTeam;
+import net.minecraft.world.scores.Scoreboard;
 
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 final class Area {
 	static boolean inSkyblock;
 	static String area = "";
 	static String section;
 
+	// "label: number" values from the sidebar and tab list, e.g. purse, bits, mithril (lowercase label)
+	static Map<String, Double> numbers = Map.of();
+
 	static void update(Minecraft mc) {
 		inSkyblock = inSkyblock(mc);
 		area = inSkyblock ? tabArea(mc) : "";
 		section = sectionOf(area);
+		numbers = inSkyblock ? readNumbers(mc) : Map.of();
+	}
+
+	private static Map<String, Double> readNumbers(Minecraft mc) {
+		Map<String, Double> out = new HashMap<>();
+		Scoreboard sb = mc.level.getScoreboard();
+		Objective obj = sb.getDisplayObjective(DisplaySlot.SIDEBAR);
+		if (obj != null) {
+			for (PlayerScoreEntry e : sb.listPlayerScores(obj)) {
+				// Hypixel builds each sidebar line from the team prefix/suffix around a blank owner
+				Goal.putNumber(out, strip(PlayerTeam.formatNameForTeam(sb.getPlayersTeam(e.owner()), e.ownerName()).getString()));
+			}
+		}
+		if (mc.getConnection() != null) {
+			for (PlayerInfo p : mc.getConnection().getListedOnlinePlayers()) {
+				if (p.getTabListDisplayName() != null) Goal.putNumber(out, strip(p.getTabListDisplayName().getString()));
+			}
+		}
+		return out;
 	}
 
 	// Hypixel puts "SKYBLOCK" in the sidebar title (also "SKYBLOCK CO-OP" / "SKYBLOCK GUEST").

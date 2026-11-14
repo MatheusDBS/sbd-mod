@@ -3,7 +3,7 @@ package dev.skyblockdailies;
 import java.util.List;
 import java.util.regex.Pattern;
 
- // Matched against chat with color codes stripped. Hypixel can change these messages at any time.
+// Matched against chat with color codes stripped. Hypixel can change these messages at any time.
 final class AutoMark {
 	record Rule(String taskId, Pattern pattern, int need) {}
 

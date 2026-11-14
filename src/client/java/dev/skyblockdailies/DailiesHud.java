@@ -28,7 +28,16 @@ final class DailiesHud {
 	}
 
 	static void update() {
-		current = SkyblockDailies.hudOn && Area.inSkyblock && Area.section != null ? lines(Area.section) : null;
+		if (!SkyblockDailies.hudOn || !Area.inSkyblock) {
+			current = null;
+			return;
+		}
+		List<String> out = new ArrayList<>();
+		String goal = Goal.hudLine();
+		if (goal != null) out.add(goal);
+		List<String> dailies = Area.section == null ? null : lines(Area.section);
+		if (dailies != null) out.addAll(dailies);
+		current = out.isEmpty() ? null : out;
 	}
 
 	static List<String> lines(String section) {

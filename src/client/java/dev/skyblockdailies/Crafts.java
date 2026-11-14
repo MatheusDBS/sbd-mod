@@ -50,7 +50,9 @@ final class Crafts {
 	static volatile Map<String, Recipe> craftByOut = Map.of();
 	static volatile Map<String, List<Recipe>> usedInIndex = Map.of();
 	static volatile Map<String, Double> npcSell = Map.of();
+	static volatile JsonObject essenceCosts = new JsonObject(); // NEU constants/essencecosts.json: star costs per item
 	static volatile long pricesVersion; // bumped on every price update; tooltips use it as cache key
+	static volatile Set<String> bazaarIds = Set.of();
 	private static final String ITEMS = "https://api.hypixel.net/v2/resources/skyblock/items";
 	private static long pricesAt;
 	private static volatile boolean refreshing;
@@ -113,6 +115,8 @@ final class Crafts {
 		}
 		forgeByOut = forge;
 		craftByOut = craft;
+		Path ess = dir.getParent().resolve("constants/essencecosts.json");
+		if (Files.exists(ess)) essenceCosts = JsonParser.parseString(Files.readString(ess)).getAsJsonObject();
 		usedInIndex = usedIn;
 		names = ns;
 		usedByName = used;
@@ -196,6 +200,7 @@ final class Crafts {
 			}
 			npcSell = npc;
 		}
+		bazaarIds = Set.copyOf(bz.keySet());
 		buy = b;
 		sell = s;
 		pricesAt = System.currentTimeMillis();
@@ -203,11 +208,15 @@ final class Crafts {
 	}
 
 	private static JsonObject get(String url) throws IOException, InterruptedException {
+		return JsonParser.parseString(fetch(url)).getAsJsonObject();
+	}
+
+	static String fetch(String url) throws IOException, InterruptedException {
 		HttpRequest req = HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(30))
 				.header("User-Agent", "SkyblockDailies-mod").build();
 		HttpResponse<String> res = HTTP.send(req, HttpResponse.BodyHandlers.ofString());
-		if (res.statusCode() != 200) throw new IOException(url + " respondeu " + res.statusCode());
-		return JsonParser.parseString(res.body()).getAsJsonObject();
+		if (res.statusCode() != 200) throw new IOException(url + " returned " + res.statusCode());
+		return res.body();
 	}
 
 

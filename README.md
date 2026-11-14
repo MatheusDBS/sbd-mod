@@ -34,6 +34,10 @@ All commands live under `/sbd` so they can't clash with Hypixel or other mods. `
 | `/sbd bestcraft [material]` | Top 5 most profitable crafts using a material (Tab completes). With no argument it uses the item in your hand. |
 | `/sbd bestforge` | Top 10 Forge items by profit per forge hour. |
 | `/sbd gabagool <amount>` | Very Crude → Hypergolic Gabagool calculator. |
+| `/sbd goal <amount> <name>` | Session goal for any "Name: number" on your sidebar or tab list, e.g. `/sbd goal 10M purse`, `/sbd goal 100k mithril`. Shows a progress bar on the HUD. `/sbd goal clear` removes it. |
+| `/sbd upgrade` | Coins needed for the held item's next essence star, all stars to max, and the next enchant level books. |
+| `/sbd sellcheck` | Compares the held item's price with the last 30 days (Coflnet history) and says if it's a good time to sell or hold. |
+| `/sbd help` | Lists all commands. |
 
 ## Requirements
 - Minecraft **26.2**, Fabric Loader **0.20.1+**, **Fabric API**, Java 25.
