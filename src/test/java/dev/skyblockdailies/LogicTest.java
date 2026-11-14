@@ -162,6 +162,16 @@ class LogicTest {
 		assertEquals(2500.0, Goal.parseAmount("2.5k"));
 		assertEquals(1000.0, Goal.parseAmount("1,000"));
 		assertEquals(-1.0, Goal.parseAmount("abc"));
+
+		// bank goal counts chat, since the sidebar only shows "Bank: 4B"
+		Goal.label = "bank";
+		Goal.onChat("You have deposited 10M coins! You now have 4B coins in your account!");
+		Goal.onChat("You have withdrawn 10.5k coins! You now have 991.1M coins in your account!");
+		Goal.onChat("You have just received 1,500 coins as interest in your co-op bank account!");
+		Goal.onChat("Since you've been away you earned 2k coins as interest in your personal bank account!");
+		Goal.onChat("You have deposited nothing");
+		assertEquals(10_000_000 - 10_500 + 1500 + 2000, Goal.progress(), 1e-6);
+		Goal.label = null;
 	}
 
 	@Test

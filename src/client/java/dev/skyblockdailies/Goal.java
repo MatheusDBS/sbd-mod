@@ -16,9 +16,26 @@ final class Goal {
 	private static final Pattern AMOUNT = Pattern.compile("^([\\d.,]+)\\s*([kmb])?$", Pattern.CASE_INSENSITIVE);
 	private static final int BAR = 10;
 
+	// The sidebar rounds the bank ("Bank: 4B"), so a 10M deposit is invisible there; bank goals count chat messages instead.
+	private static final Pattern BANK_MOVE = Pattern.compile("^You have (deposited|withdrawn) ([\\d.,]+[kmb]?) coins!", Pattern.CASE_INSENSITIVE);
+	private static final Pattern BANK_INTEREST = Pattern.compile("(?:received|earned) ([\\d.,]+[kmb]?) coins as interest", Pattern.CASE_INSENSITIVE);
+
 	static String label; // lowercase, as found in Area.numbers
 	static double start, target;
+	private static double bankDelta;
 	private static boolean reached;
+
+	static void onChat(String plain) {
+		if (!"bank".equals(label)) return;
+		Matcher m = BANK_MOVE.matcher(plain);
+		if (m.find()) {
+			double v = parseAmount(m.group(2));
+			if (v > 0) bankDelta += m.group(1).equalsIgnoreCase("deposited") ? v : -v;
+			return;
+		}
+		m = BANK_INTEREST.matcher(plain);
+		if (m.find() && parseAmount(m.group(1)) > 0) bankDelta += parseAmount(m.group(1));
+	}
 
 	/** Parses "Purse: 1,234,567 (+5)" / "Mithril: 12.5k" into the map. */
 	static void putNumber(Map<String, Double> out, String line) {
@@ -51,6 +68,7 @@ final class Goal {
 
 	/** Progress so far, or NaN if the number isn't visible right now (e.g. powder only shows in the mines). */
 	static double progress() {
+		if ("bank".equals(label)) return bankDelta;
 		Double now = Area.numbers.get(label);
 		return now == null ? Double.NaN : now - start;
 	}
@@ -91,6 +109,7 @@ final class Goal {
 		label = key;
 		start = now;
 		target = t;
+		bankDelta = 0;
 		reached = false;
 		src.sendFeedback(Component.literal("§6[Goal] §aSet: §f+" + Crafts.fmt(t) + " " + key + " §7(starting at " + Crafts.fmt(now) + ")"));
 		return 1;

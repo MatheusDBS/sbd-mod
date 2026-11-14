@@ -111,7 +111,9 @@ public class SkyblockDailies implements ClientModInitializer {
 			}
 		});
 		ClientReceiveMessageEvents.GAME.register((msg, overlay) -> {
-			if (!overlay) AutoMark.onChat(msg.getString());
+			if (overlay) return;
+			AutoMark.onChat(msg.getString());
+			Goal.onChat(Area.strip(msg.getString()).trim());
 		});
 		HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("skyblockdailies", "hud"), DailiesHud::render);
 		ItemTooltipCallback.EVENT.register((stack, ctx, flag, lines) -> Tooltips.append(stack, lines));
